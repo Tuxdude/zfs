@@ -49,6 +49,11 @@ func (p *Pool) VerboseString() string {
 	)
 }
 
+// FileSystems returns the list of file systems within the pool.
+func (p *Pool) FileSystems() (FileSystemList, error) {
+	return listFileSystems(p)
+}
+
 func parsePoolInfo(line string) (*Pool, error) {
 	cols := strings.Split(line, "\t")
 	if len(cols) != 8 {
