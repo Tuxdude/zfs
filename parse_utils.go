@@ -42,3 +42,18 @@ func parseUnixTimestamp(str string, desc string) (time.Time, error) {
 
 	return time.Unix(int64(t), 0), nil
 }
+
+func parseTimestamp(str string, layout string, desc string) (time.Time, error) {
+	loc, err := time.LoadLocation("Local")
+	if err != nil {
+		return time.Time{}, fmt.Errorf("failed to load local time location")
+	}
+
+	t, err := time.ParseInLocation(layout, str, loc)
+	if err != nil {
+		return time.Time{}, fmt.Errorf(
+			"parsing %q, unable to convert %q to timestamp: %w", desc, str, err)
+	}
+
+	return t, nil
+}

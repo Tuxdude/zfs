@@ -42,6 +42,11 @@ func (s *Snapshot) FullName() string {
 	return fmt.Sprintf("%s@%s", s.FileSystem.FullName(), s.Name)
 }
 
+// Holds returns the list of holds on the snapshot.
+func (s *Snapshot) Holds() (HoldList, error) {
+	return listHolds(s)
+}
+
 func listSnapshots(fs *FileSystem) (SnapshotList, error) {
 	out, err := runZfsCmd("list", "-H", "-p", "-t", "snapshot", "-o", "name,guid,creation", fs.FullName())
 	if err != nil {
