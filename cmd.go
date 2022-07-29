@@ -25,3 +25,7 @@ func runCmd(bin string, args ...string) (string, error) {
 func runZpoolCmd(args ...string) (string, error) {
 	return runCmd("zpool", args...)
 }
+
+func runZfsCmd(args ...string) (string, error) {
+	return runCmd("zfs", args...)
+}

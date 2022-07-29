@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func splitOnNewLine(input string) []string {
@@ -31,4 +32,13 @@ func parseUint8(str string, desc string) (uint8, error) {
 	}
 
 	return uint8(res), nil
+}
+
+func parseUnixTimestamp(str string, desc string) (time.Time, error) {
+	t, err := parseUint64(str, desc)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return time.Unix(int64(t), 0), nil
 }
