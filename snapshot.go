@@ -2,6 +2,7 @@ package zfs
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 )
@@ -45,6 +46,27 @@ func (s *Snapshot) FullName() string {
 // Holds returns the list of holds on the snapshot.
 func (s *Snapshot) Holds() (HoldList, error) {
 	return listHolds(s)
+}
+
+// RecursiveSnapshotGroup represents a recursive group of snapshots within a pool taken atomically at the same timestamp.
+type RecursiveSnapshotGroup struct {
+	Name      string
+	Creation  time.Time
+	Pool      *Pool
+	Snapshots SnapshotList
+}
+
+// RecursiveSnapshotGroupList represents a list of RecursiveSnapshotGroup objects.
+type RecursiveSnapshotGroupList []*RecursiveSnapshotGroup
+
+// String returns the string representation of the recursive snapshot group.
+func (r *RecursiveSnapshotGroup) String() string {
+	return fmt.Sprintf(
+		"{RecursiveSnapshotGroup Name: %q, Creation: %v, Pool: %v}",
+		r.Name,
+		r.Creation,
+		r.Pool,
+	)
 }
 
 func listSnapshots(fs *FileSystem) (SnapshotList, error) {
@@ -91,4 +113,81 @@ func parseSnapshotInfo(fs *FileSystem, line string) (*Snapshot, error) {
 		GUID:       guid,
 		Creation:   creation,
 	}, nil
+}
+
+func listRecursiveSnapshotGroups(pool *Pool) (RecursiveSnapshotGroupList, error) {
+	fsList, err := pool.FileSystems()
+	if err != nil {
+		return nil, err
+	}
+
+	var poolFsNames []string
+	for _, f := range fsList {
+		poolFsNames = append(poolFsNames, f.Name)
+	}
+
+	// Hash map with snapshot name as the key and the list of
+	// associated snapshots as the value.
+	snapMap := make(map[string]SnapshotList)
+
+	// Identify the list of snapshots per file system.
+	for _, f := range fsList {
+		snapshots, err := f.Snapshots()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, s := range snapshots {
+			snapMap[s.Name] = append(snapMap[s.Name], s)
+		}
+	}
+
+	// Remove all incomplete groups (i.e. a snapshot group that doesn't
+	// cover all the file systems within the pool).
+	for name, sg := range snapMap {
+		var sgFsNames []string
+		for _, snap := range sg {
+			sgFsNames = append(sgFsNames, snap.FileSystem.Name)
+		}
+
+		if !strSlicesEqual(poolFsNames, sgFsNames) {
+			delete(snapMap, name)
+		}
+
+		// Validate that all snapshots in the group have the same
+		// snapshot creation timestamp.
+		l := len(sg)
+		for i := 1; i < l; i++ {
+			if !sg[0].Creation.Equal(sg[i].Creation) {
+				return nil, fmt.Errorf("snapshot with the same name has different timestamps across file systems - %v %v", sg[0].FullName(), sg[i].FullName())
+			}
+		}
+	}
+
+	// Convert the map to a list of snapshot groups.
+	var sgList []SnapshotList
+	for _, sg := range snapMap {
+		sgList = append(sgList, sg)
+	}
+
+	// Sort the snapshot groups by descending order of the snapshot
+	// creation timestamp.
+	sort.Slice(sgList, func(i, j int) bool {
+		return sgList[i][0].Creation.After(sgList[j][0].Creation)
+	})
+
+	// Pack the snapshot group list as list of recursiveSnapshotGroup objects.
+	var result RecursiveSnapshotGroupList
+
+	for _, s := range sgList {
+		r := &RecursiveSnapshotGroup{
+			Name:      s[0].Name,
+			Creation:  s[0].Creation,
+			Pool:      pool,
+			Snapshots: s,
+		}
+		result = append(result, r)
+	}
+
+	return result, nil
 }

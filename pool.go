@@ -54,6 +54,11 @@ func (p *Pool) FileSystems() (FileSystemList, error) {
 	return listFileSystems(p)
 }
 
+// RecursiveSnapshotGroups returns the list of groups of recursive snapshots taken atomically at the same timestamp within the pool.
+func (p *Pool) RecursiveSnapshotGroups() (RecursiveSnapshotGroupList, error) {
+	return listRecursiveSnapshotGroups(p)
+}
+
 func parsePoolInfo(line string) (*Pool, error) {
 	cols := strings.Split(line, "\t")
 	if len(cols) != 8 {
