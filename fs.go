@@ -49,6 +49,11 @@ func (f *FileSystem) FullName() string {
 	return fmt.Sprintf("%s/%s", f.Pool.Name, f.Name)
 }
 
+// Snapshots returns the list of snapshots associated with this file system.
+func (f *FileSystem) Snapshots() (SnapshotList, error) {
+	return listSnapshots(f)
+}
+
 func listFileSystems(pool *Pool) (FileSystemList, error) {
 	out, err := runZfsCmd(
 		"list",
