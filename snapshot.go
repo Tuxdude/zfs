@@ -69,6 +69,11 @@ func (r *RecursiveSnapshotGroup) String() string {
 	)
 }
 
+// Holds returns the list of recursive hold groups for the recursive snapshot group.
+func (r *RecursiveSnapshotGroup) Holds() (RecursiveHoldGroupList, error) {
+	return listRecursiveHoldGroups(r)
+}
+
 func listSnapshots(fs *FileSystem) (SnapshotList, error) {
 	out, err := runZfsCmd("list", "-H", "-p", "-t", "snapshot", "-o", "name,guid,creation", fs.FullName())
 	if err != nil {
