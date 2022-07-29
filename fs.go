@@ -54,6 +54,11 @@ func (f *FileSystem) Snapshots() (SnapshotList, error) {
 	return listSnapshots(f)
 }
 
+// GetProp returns the specified property's value for the file system.
+func (f *FileSystem) GetProp(prop string) (string, error) {
+	return getPropForFsOrSnap(f.FullName(), prop)
+}
+
 func listFileSystems(pool *Pool) (FileSystemList, error) {
 	out, err := runZfsCmd(
 		"list",
@@ -112,4 +117,19 @@ func parseFileSystemInfo(pool *Pool, line string) (*FileSystem, error) {
 		GUID:     guid,
 		Creation: creation,
 	}, nil
+}
+
+func getPropForFsOrSnap(fsOrSnap string, prop string) (string, error) {
+	out, err := runZfsCmd("get", "-H", "-o", "value", prop, fsOrSnap)
+	if err != nil {
+		return "", fmt.Errorf(
+			"failed to get property %q of filesystem/snapshot %q, reason: %w", prop, fsOrSnap, err)
+	}
+
+	val, err := strFromOnlyLine(out)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse property value %q, reason: %w", out, err)
+	}
+
+	return val, nil
 }

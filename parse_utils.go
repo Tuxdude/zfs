@@ -16,6 +16,15 @@ func splitOnNewLine(input string) []string {
 	return strings.Split(s, "\n")
 }
 
+func strFromOnlyLine(input string) (string, error) {
+	lines := splitOnNewLine(input)
+	if len(lines) != 1 {
+		return "", fmt.Errorf("expected exactly one line of output, but found %d lines, lines = %v", len(lines), lines)
+	}
+
+	return lines[0], nil
+}
+
 func parseUint64(str string, desc string) (uint64, error) {
 	res, err := strconv.ParseUint(str, 10, 64)
 	if err != nil {

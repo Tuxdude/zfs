@@ -48,6 +48,11 @@ func (s *Snapshot) Holds() (HoldList, error) {
 	return listHolds(s)
 }
 
+// GetProp returns the specified property's value for the snapshot.
+func (s *Snapshot) GetProp(prop string) (string, error) {
+	return getPropForFsOrSnap(s.FullName(), prop)
+}
+
 // RecursiveSnapshotGroup represents a recursive group of snapshots within a pool taken atomically at the same timestamp.
 type RecursiveSnapshotGroup struct {
 	Name      string
