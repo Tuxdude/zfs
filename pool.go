@@ -59,6 +59,11 @@ func (p *Pool) RecursiveSnapshotGroups() (RecursiveSnapshotGroupList, error) {
 	return listRecursiveSnapshotGroups(p)
 }
 
+// GetProp returns the specified property's value for the pool.
+func (p *Pool) GetProp(prop string) (string, error) {
+	return getPropForPool(p.Name, prop)
+}
+
 func parsePoolInfo(line string) (*Pool, error) {
 	cols := strings.Split(line, "\t")
 	if len(cols) != 8 {
@@ -127,4 +132,19 @@ func ListPools() (PoolList, error) {
 	}
 
 	return result, nil
+}
+
+func getPropForPool(pool string, prop string) (string, error) {
+	out, err := runZpoolCmd("get", "-H", "-o", "value", prop, pool)
+	if err != nil {
+		return "", fmt.Errorf(
+			"failed to get property %q of pool %q, reason: %w", prop, pool, err)
+	}
+
+	val, err := strFromOnlyLine(out)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse property value %q, reason: %w", out, err)
+	}
+
+	return val, nil
 }
