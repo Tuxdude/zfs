@@ -67,13 +67,15 @@ func (f *FileSystem) Snapshots() (SnapshotList, error) {
 
 // GetProp returns the specified property's value for the file system.
 func (f *FileSystem) GetProp(prop string) (string, error) {
-	return getPropForFsOrSnap(f.FullName(), prop)
+	return getPropForFsOrSnap(f.Pool, f.FullName(), prop)
+}
+
+func (f *FileSystem) cmd() *cmd {
+	return f.Pool.cmd()
 }
 
 func listFileSystems(pool *Pool) (FileSystemList, error) {
-	cmd := systemCmdInvoker()
-
-	out, err := cmd.zfs.list(
+	out, err := pool.cmd().zfs.list(
 		pool.Name, true, zfsListFilesystems, listFileSystemsOutputCols)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list file systems of %q, reason: %w", pool, err)
@@ -124,10 +126,8 @@ func parseFileSystemInfo(pool *Pool, line string) (*FileSystem, error) {
 	}, nil
 }
 
-func getPropForFsOrSnap(fsOrSnap string, prop string) (string, error) {
-	cmd := systemCmdInvoker()
-
-	out, err := cmd.zfs.get(fsOrSnap, []string{prop}, getFsOrSnapPropOutputCols)
+func getPropForFsOrSnap(pool *Pool, fsOrSnap string, prop string) (string, error) {
+	out, err := pool.cmd().zfs.get(fsOrSnap, []string{prop}, getFsOrSnapPropOutputCols)
 	if err != nil {
 		return "", fmt.Errorf(
 			"failed to get property %q of filesystem/snapshot %q, reason: %w", prop, fsOrSnap, err)

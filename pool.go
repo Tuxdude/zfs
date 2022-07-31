@@ -39,6 +39,8 @@ type Pool struct {
 	HealthStatus string
 	// Alternate root for the pool.
 	AltRoot string
+	// System handle for the pool.
+	System *System
 }
 
 // PoolList represents a list of Pool objects.
@@ -75,12 +77,27 @@ func (p *Pool) RecursiveSnapshotGroups() (RecursiveSnapshotGroupList, error) {
 	return listRecursiveSnapshotGroups(p)
 }
 
-// GetProp returns the specified property's value for the pool.
-func (p *Pool) GetProp(prop string) (string, error) {
-	return getPropForPool(p.Name, prop)
+func (p *Pool) cmd() *cmd {
+	return p.System.cmd
 }
 
-func parsePoolInfo(line string) (*Pool, error) {
+// GetProp returns the specified property's value for the pool.
+func (p *Pool) GetProp(prop string) (string, error) {
+	out, err := p.cmd().zpool.get(p.Name, []string{prop}, getPoolPropOutputCols)
+	if err != nil {
+		return "", fmt.Errorf(
+			"failed to get property %q of pool %q, reason: %w", prop, p.Name, err)
+	}
+
+	val, err := strFromOnlyLine(out)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse property value %q, reason: %w", out, err)
+	}
+
+	return val, nil
+}
+
+func parsePoolInfo(system *System, line string) (*Pool, error) {
 	cols := strings.Split(line, "\t")
 	if len(cols) != 8 {
 		return nil, fmt.Errorf("expected 8 columns per line in pool info, but found %d, line: %q", len(cols), line)
@@ -120,14 +137,13 @@ func parsePoolInfo(line string) (*Pool, error) {
 		FragmentationPercent: frag,
 		HealthStatus:         cols[6],
 		AltRoot:              cols[7],
+		System:               system,
 	}, nil
 }
 
 // ListPools scans the system for zpools and returns the list of pools found.
-func ListPools() (PoolList, error) {
-	cmd := systemCmdInvoker()
-
-	out, err := cmd.zpool.list(listPoolsOutputCols)
+func listPools(system *System) (PoolList, error) {
+	out, err := system.cmd.zpool.list(listPoolsOutputCols)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list pools, reason: %w", err)
 	}
@@ -136,7 +152,7 @@ func ListPools() (PoolList, error) {
 
 	pools := splitOnNewLine(out)
 	for _, p := range pools {
-		pool, err := parsePoolInfo(p)
+		pool, err := parsePoolInfo(system, p)
 		if err != nil {
 			return nil, err
 		}
@@ -145,21 +161,4 @@ func ListPools() (PoolList, error) {
 	}
 
 	return result, nil
-}
-
-func getPropForPool(pool string, prop string) (string, error) {
-	cmd := systemCmdInvoker()
-
-	out, err := cmd.zpool.get(pool, []string{prop}, getPoolPropOutputCols)
-	if err != nil {
-		return "", fmt.Errorf(
-			"failed to get property %q of pool %q, reason: %w", prop, pool, err)
-	}
-
-	val, err := strFromOnlyLine(out)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse property value %q, reason: %w", out, err)
-	}
-
-	return val, nil
 }

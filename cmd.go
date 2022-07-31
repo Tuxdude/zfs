@@ -65,8 +65,8 @@ func (s *systemZpoolCmd) run(args ...string) (string, error) {
 	return runSystemCmd("zpool", args...)
 }
 
-func systemCmdInvoker() *cmdInvoker {
-	return &cmdInvoker{
+func realSystemCmd() *cmd {
+	return &cmd{
 		zfs:   &systemZfsCmd{},
 		zpool: &systemZpoolCmd{},
 	}

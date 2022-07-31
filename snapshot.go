@@ -58,7 +58,11 @@ func (s *Snapshot) Holds() (HoldList, error) {
 
 // GetProp returns the specified property's value for the snapshot.
 func (s *Snapshot) GetProp(prop string) (string, error) {
-	return getPropForFsOrSnap(s.FullName(), prop)
+	return getPropForFsOrSnap(s.FileSystem.Pool, s.FullName(), prop)
+}
+
+func (s *Snapshot) cmd() *cmd {
+	return s.FileSystem.cmd()
 }
 
 // RecursiveSnapshotGroup represents a recursive group of snapshots within a pool taken atomically at the same timestamp.
@@ -88,9 +92,7 @@ func (r *RecursiveSnapshotGroup) Holds() (RecursiveHoldGroupList, error) {
 }
 
 func listSnapshots(fs *FileSystem) (SnapshotList, error) {
-	cmd := systemCmdInvoker()
-
-	out, err := cmd.zfs.list(
+	out, err := fs.cmd().zfs.list(
 		fs.FullName(), false, zfsListSnapshots, listSnapshotsOutputCols)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list snapshots of file system %q, reason: %w", fs, err)

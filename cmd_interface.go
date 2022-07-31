@@ -25,7 +25,7 @@ type zpoolCmd interface {
 	get(pool string, props []string, cols []string) (string, error)
 }
 
-type cmdInvoker struct {
+type cmd struct {
 	zfs   zfsCmd
 	zpool zpoolCmd
 }

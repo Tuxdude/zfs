@@ -55,9 +55,7 @@ func (r *RecursiveHoldGroup) String() string {
 }
 
 func listHolds(snapshot *Snapshot) (HoldList, error) {
-	cmd := systemCmdInvoker()
-
-	out, err := cmd.zfs.holds(snapshot.FullName())
+	out, err := snapshot.cmd().zfs.holds(snapshot.FullName())
 	if err != nil {
 		return nil, fmt.Errorf("failed to list holds of snapshot %q, reason: %w", snapshot, err)
 	}
