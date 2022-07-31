@@ -5,6 +5,22 @@ import (
 	"strings"
 )
 
+var (
+	listPoolsOutputCols = []string{
+		"name",
+		"guid",
+		"size",
+		"allocated",
+		"free",
+		"fragmentation",
+		"health",
+		"altroot",
+	}
+	getPoolPropOutputCols = []string{
+		"value",
+	}
+)
+
 // Pool represents a zpool.
 type Pool struct {
 	// Name of the pool.
@@ -109,12 +125,9 @@ func parsePoolInfo(line string) (*Pool, error) {
 
 // ListPools scans the system for zpools and returns the list of pools found.
 func ListPools() (PoolList, error) {
-	out, err := runZpoolCmd(
-		"list",
-		"-H",
-		"-p",
-		"-o",
-		"name,guid,size,allocated,free,fragmentation,health,altroot")
+	cmd := systemCmdInvoker()
+
+	out, err := cmd.zpool.list(listPoolsOutputCols)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list pools, reason: %w", err)
 	}
@@ -135,7 +148,9 @@ func ListPools() (PoolList, error) {
 }
 
 func getPropForPool(pool string, prop string) (string, error) {
-	out, err := runZpoolCmd("get", "-H", "-o", "value", prop, pool)
+	cmd := systemCmdInvoker()
+
+	out, err := cmd.zpool.get(pool, []string{prop}, getPoolPropOutputCols)
 	if err != nil {
 		return "", fmt.Errorf(
 			"failed to get property %q of pool %q, reason: %w", prop, pool, err)

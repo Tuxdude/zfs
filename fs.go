@@ -6,6 +6,17 @@ import (
 	"time"
 )
 
+var (
+	listFileSystemsOutputCols = []string{
+		"name",
+		"guid",
+		"creation",
+	}
+	getFsOrSnapPropOutputCols = []string{
+		"value",
+	}
+)
+
 // FileSystem represents a file system within a zpool.
 type FileSystem struct {
 	// Name of the file system.
@@ -60,16 +71,10 @@ func (f *FileSystem) GetProp(prop string) (string, error) {
 }
 
 func listFileSystems(pool *Pool) (FileSystemList, error) {
-	out, err := runZfsCmd(
-		"list",
-		"-H",
-		"-p",
-		"-r",
-		"-t",
-		"filesystem",
-		"-o",
-		"name,guid,creation",
-		pool.Name)
+	cmd := systemCmdInvoker()
+
+	out, err := cmd.zfs.list(
+		pool.Name, true, zfsListFilesystems, listFileSystemsOutputCols)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list file systems of %q, reason: %w", pool, err)
 	}
@@ -120,7 +125,9 @@ func parseFileSystemInfo(pool *Pool, line string) (*FileSystem, error) {
 }
 
 func getPropForFsOrSnap(fsOrSnap string, prop string) (string, error) {
-	out, err := runZfsCmd("get", "-H", "-o", "value", prop, fsOrSnap)
+	cmd := systemCmdInvoker()
+
+	out, err := cmd.zfs.get(fsOrSnap, []string{prop}, getFsOrSnapPropOutputCols)
 	if err != nil {
 		return "", fmt.Errorf(
 			"failed to get property %q of filesystem/snapshot %q, reason: %w", prop, fsOrSnap, err)

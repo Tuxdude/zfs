@@ -7,6 +7,14 @@ import (
 	"time"
 )
 
+var (
+	listSnapshotsOutputCols = []string{
+		"name",
+		"guid",
+		"creation",
+	}
+)
+
 // Snapshot represents a snapshot of the file system within a zpool.
 type Snapshot struct {
 	// Name of the snapshot.
@@ -80,7 +88,10 @@ func (r *RecursiveSnapshotGroup) Holds() (RecursiveHoldGroupList, error) {
 }
 
 func listSnapshots(fs *FileSystem) (SnapshotList, error) {
-	out, err := runZfsCmd("list", "-H", "-p", "-t", "snapshot", "-o", "name,guid,creation", fs.FullName())
+	cmd := systemCmdInvoker()
+
+	out, err := cmd.zfs.list(
+		fs.FullName(), false, zfsListSnapshots, listSnapshotsOutputCols)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list snapshots of file system %q, reason: %w", fs, err)
 	}
