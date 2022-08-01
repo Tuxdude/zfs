@@ -1,6 +1,7 @@
 package zfs
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 )
@@ -203,7 +204,7 @@ func TestListPools(t *testing.T) {
 	}
 }
 
-var listPoolsErrorTests = []struct {
+var listPoolsColParsingErrorTests = []struct {
 	name  string
 	pools fakeZpools
 	want  string
@@ -259,8 +260,8 @@ var listPoolsErrorTests = []struct {
 	},
 }
 
-func TestListPoolsErrors(t *testing.T) {
-	for _, test := range listPoolsErrorTests {
+func TestListPoolsColParsingErrors(t *testing.T) {
+	for _, test := range listPoolsColParsingErrorTests {
 		tc := test
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -285,9 +286,75 @@ func TestListPoolsErrors(t *testing.T) {
 
 			if !match {
 				t.Errorf(
-					"ListPools()\nTest Case: %q\nFailure: gotErr did not match the want regex\nReason:\n\tgotErr = %q\n\twant = %q",
+					"ListPools()\nTest Case: %q\nFailure: gotErr did not match the want regex\nReason:\n\tgotErr = %q\n\twant =   %q",
 					tc.name, gotErr, tc.want)
 			}
+		})
+	}
+}
+
+var listPoolsZpoolListErrorTests = []struct {
+	name         string
+	listOverride func(cols []string) (string, error)
+	want         string
+}{
+	{
+		name: "Invalid Column Count One Row",
+		listOverride: func(cols []string) (string, error) {
+			return "foo\tbar\tbaz\n", nil
+		},
+		want: `expected 8 columns per line in pool info, but found 3, line: "foo\\tbar\\tbaz"`,
+	},
+	{
+		name: "Invalid Column Count Multiple rows",
+		listOverride: func(cols []string) (string, error) {
+			return "p1\t1\t2\t3\t4\t5\tONLINE\talt1\n" +
+				"f1\tf2\tf3\tf4\n" +
+				"p2\t1\t2\t3\t4\t5\tONLINE\talt2\n", nil
+		},
+		want: `expected 8 columns per line in pool info, but found 4, line: "f1\\tf2\\tf3\\tf4"`,
+	},
+	{
+		name: "zpool list Command Failed With Error",
+		listOverride: func(cols []string) (string, error) {
+			return "", fmt.Errorf("zpool list command failed")
+		},
+		want: "failed to list pools, reason: zpool list command failed",
+	},
+}
+
+func TestListPoolsZpoolListErrors(t *testing.T) {
+	for _, test := range listPoolsZpoolListErrorTests {
+		tc := test
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			system := newFakeSystem(nil)
+			zpoolCmd := getFakeZpoolCmd(system)
+			zpoolCmd.setListOverride(tc.listOverride)
+
+			_, gotErr := system.ListPools()
+			if gotErr == nil {
+				t.Errorf(
+					"ListPools()\nTest Case: %q\nFailure: gotErr == nil\nReason: want = %q",
+					tc.name, tc.want)
+				return
+			}
+
+			match, err := regexp.MatchString(tc.want, gotErr.Error())
+			if err != nil {
+				t.Errorf(
+					"ListPools()\nTest Case: %q\nFailure: unexpected exception while matching against gotErr error string\nReason: error = %v",
+					tc.name, err)
+				return
+			}
+
+			if !match {
+				t.Errorf(
+					"ListPools()\nTest Case: %q\nFailure: gotErr did not match the want regex\nReason:\n\tgotErr = %q\n\twant   = %q",
+					tc.name, gotErr, tc.want)
+			}
+
 		})
 	}
 }

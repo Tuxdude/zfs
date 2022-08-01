@@ -124,10 +124,15 @@ func (f *fakeZfsCmd) holds(snap string) (string, error) {
 }
 
 type fakeZpoolCmd struct {
-	pools fakeZpools
+	pools        fakeZpools
+	listOverride func([]string) (string, error)
 }
 
 func (f *fakeZpoolCmd) list(cols []string) (string, error) {
+	if f.listOverride != nil {
+		return f.listOverride(cols)
+	}
+
 	if len(cols) == 0 {
 		return "", fmt.Errorf("at least one column must be specified for 'zpool list'")
 	}
@@ -149,6 +154,10 @@ func (f *fakeZpoolCmd) get(pool string, props []string, cols []string) (string, 
 
 	// TODO: Implement this.
 	panic(fmt.Errorf("Unimplemented"))
+}
+
+func (f *fakeZpoolCmd) setListOverride(override func(cols []string) (string, error)) {
+	f.listOverride = override
 }
 
 type colOutputWriter struct {

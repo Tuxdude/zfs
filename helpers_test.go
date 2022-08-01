@@ -13,6 +13,15 @@ func newFakeSystem(pools fakeZpools) *System {
 	})
 }
 
+func getFakeZpoolCmd(system *System) *fakeZpoolCmd {
+	result, ok := system.cmd.zpool.(*fakeZpoolCmd)
+	if !ok {
+		panic("supplied system argument includes a cmd.zpool field that is not a *fakeZpoolCmd")
+	}
+
+	return result
+}
+
 func updateExpectedPoolsWithSystem(pools PoolList, system *System) {
 	for _, pool := range pools {
 		pool.System = system
