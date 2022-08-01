@@ -103,6 +103,8 @@ func parsePoolInfo(system *System, line string) (*Pool, error) {
 		return nil, fmt.Errorf("expected 8 columns per line in pool info, but found %d, line: %q", len(cols), line)
 	}
 
+	name := cols[0]
+
 	guid, err := parseUint64(cols[1], "pool info guid")
 	if err != nil {
 		return nil, err
@@ -128,15 +130,25 @@ func parsePoolInfo(system *System, line string) (*Pool, error) {
 		return nil, err
 	}
 
+	health := cols[6]
+	if len(health) == 0 {
+		return nil, fmt.Errorf("parsing \"pool info health\", invalid empty health: %q", health)
+	}
+
+	altRoot := cols[7]
+	if len(altRoot) == 0 {
+		return nil, fmt.Errorf("parsing \"pool info altroot\", invalid empty altroot: %q", altRoot)
+	}
+
 	return &Pool{
-		Name:                 cols[0],
+		Name:                 name,
 		GUID:                 guid,
 		Size:                 size,
 		Allocated:            alloc,
 		Free:                 free,
 		FragmentationPercent: frag,
-		HealthStatus:         cols[6],
-		AltRoot:              cols[7],
+		HealthStatus:         health,
+		AltRoot:              altRoot,
 		System:               system,
 	}, nil
 }
