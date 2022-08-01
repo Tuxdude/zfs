@@ -8,7 +8,7 @@ import (
 )
 
 func splitOnNewLine(input string) []string {
-	s := strings.ReplaceAll(strings.TrimSpace(input), "\r\n", "\n")
+	s := strings.ReplaceAll(strings.Trim(input, "\n\r"), "\r\n", "\n")
 	if s == "" {
 		return nil
 	}
