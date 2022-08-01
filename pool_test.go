@@ -212,49 +212,70 @@ var listPoolsColParsingErrorTests = []struct {
 	{
 		name: "Invalid pool GUID",
 		pools: fakeZpools{
-			"TestPool": fakeZpoolWithPropertyOverride("guid", "invalid-guid"),
+			"TestPool": fakeZpoolWithPropertyOverride(
+				propMap{
+					"guid": "invalid-guid",
+				}),
 		},
 		want: `parsing "pool info guid", unable to convert "invalid-guid" to uint64:.*`,
 	},
 	{
 		name: "Invalid pool Size",
 		pools: fakeZpools{
-			"TestPool": fakeZpoolWithPropertyOverride("size", "invalid-size"),
+			"TestPool": fakeZpoolWithPropertyOverride(
+				propMap{
+					"size": "invalid-size",
+				}),
 		},
 		want: `parsing "pool info size", unable to convert "invalid-size" to uint64:.*`,
 	},
 	{
 		name: "Invalid pool Allocated",
 		pools: fakeZpools{
-			"TestPool": fakeZpoolWithPropertyOverride("allocated", "invalid-allocated"),
+			"TestPool": fakeZpoolWithPropertyOverride(
+				propMap{
+					"allocated": "invalid-allocated",
+				}),
 		},
 		want: `parsing "pool info allocated", unable to convert "invalid-allocated" to uint64:.*`,
 	},
 	{
 		name: "Invalid pool Free",
 		pools: fakeZpools{
-			"TestPool": fakeZpoolWithPropertyOverride("free", "invalid-free"),
+			"TestPool": fakeZpoolWithPropertyOverride(
+				propMap{
+					"free": "invalid-free",
+				}),
 		},
 		want: `parsing "pool info free", unable to convert "invalid-free" to uint64:.*`,
 	},
 	{
 		name: "Invalid pool Fragmentation",
 		pools: fakeZpools{
-			"TestPool": fakeZpoolWithPropertyOverride("fragmentation", "invalid-fragmentation"),
+			"TestPool": fakeZpoolWithPropertyOverride(
+				propMap{
+					"fragmentation": "invalid-fragmentation",
+				}),
 		},
 		want: `parsing "pool info fragmentation", unable to convert "invalid-fragmentation" to uint8:.*`,
 	},
 	{
 		name: "Invalid pool Health",
 		pools: fakeZpools{
-			"TestPool": fakeZpoolWithPropertyOverride("health", ""),
+			"TestPool": fakeZpoolWithPropertyOverride(
+				propMap{
+					"health": "",
+				}),
 		},
 		want: `parsing "pool info health", invalid empty health: ""`,
 	},
 	{
 		name: "Invalid pool AltRoot",
 		pools: fakeZpools{
-			"TestPool": fakeZpoolWithPropertyOverride("altroot", "\r"),
+			"TestPool": fakeZpoolWithPropertyOverride(
+				propMap{
+					"altroot": "\r",
+				}),
 		},
 		want: `parsing "pool info altroot", invalid empty altroot: ""`,
 	},

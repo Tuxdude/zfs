@@ -36,7 +36,7 @@ func poolListsEqual(actual PoolList, expected PoolList) error {
 	return nil
 }
 
-func fakeZpoolWithPropertyOverride(prop string, val string) *fakeZpool {
+func fakeZpoolWithPropertyOverride(override propMap) *fakeZpool {
 	result := &fakeZpool{
 		props: propMap{
 			"guid":          "1234567890123459",
@@ -48,6 +48,9 @@ func fakeZpoolWithPropertyOverride(prop string, val string) *fakeZpool {
 			"altroot":       "/some-alt-root",
 		},
 	}
-	result.props[prop] = val
+
+	for k, v := range override {
+		result.props[k] = v
+	}
 	return result
 }
