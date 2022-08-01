@@ -1,10 +1,11 @@
 package zfs
 
 import (
+	"regexp"
 	"testing"
 )
 
-var validListPoolsTests = []struct {
+var listPoolsTests = []struct {
 	name  string
 	pools fakeZpools
 	want  PoolList
@@ -177,7 +178,7 @@ var validListPoolsTests = []struct {
 }
 
 func TestListPools(t *testing.T) {
-	for _, test := range validListPoolsTests {
+	for _, test := range listPoolsTests {
 		tc := test
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -189,15 +190,103 @@ func TestListPools(t *testing.T) {
 			if nil != gotErr {
 				t.Errorf(
 					"ListPools()\nTest Case: %q\nFailure: gotErr != nil\nReason: %v",
-					tc.name,
-					gotErr,
-				)
-			} else if matchErr := poolListsEqual(tc.want, got); matchErr != nil {
+					tc.name, gotErr)
+				return
+			}
+
+			if matchErr := poolListsEqual(tc.want, got); matchErr != nil {
 				t.Errorf(
 					"ListPools()\nTest Case: %q\nFailure: want and got differ\nReason: %s",
-					tc.name,
-					matchErr,
-				)
+					tc.name, matchErr)
+			}
+		})
+	}
+}
+
+var listPoolsErrorTests = []struct {
+	name  string
+	pools fakeZpools
+	want  string
+}{
+	{
+		name: "Invalid pool GUID",
+		pools: fakeZpools{
+			"TestPool": fakeZpoolWithPropertyOverride("guid", "invalid-guid"),
+		},
+		want: `parsing "pool info guid", unable to convert "invalid-guid" to uint64:.*`,
+	},
+	{
+		name: "Invalid pool Size",
+		pools: fakeZpools{
+			"TestPool": fakeZpoolWithPropertyOverride("size", "invalid-size"),
+		},
+		want: `parsing "pool info size", unable to convert "invalid-size" to uint64:.*`,
+	},
+	{
+		name: "Invalid pool Allocated",
+		pools: fakeZpools{
+			"TestPool": fakeZpoolWithPropertyOverride("allocated", "invalid-allocated"),
+		},
+		want: `parsing "pool info allocated", unable to convert "invalid-allocated" to uint64:.*`,
+	},
+	{
+		name: "Invalid pool Free",
+		pools: fakeZpools{
+			"TestPool": fakeZpoolWithPropertyOverride("free", "invalid-free"),
+		},
+		want: `parsing "pool info free", unable to convert "invalid-free" to uint64:.*`,
+	},
+	{
+		name: "Invalid pool Fragmentation",
+		pools: fakeZpools{
+			"TestPool": fakeZpoolWithPropertyOverride("fragmentation", "invalid-fragmentation"),
+		},
+		want: `parsing "pool info fragmentation", unable to convert "invalid-fragmentation" to uint8:.*`,
+	},
+	{
+		name: "Invalid pool Health",
+		pools: fakeZpools{
+			"TestPool": fakeZpoolWithPropertyOverride("health", ""),
+		},
+		want: `parsing "pool info health", invalid empty health: ""`,
+	},
+	{
+		name: "Invalid pool AltRoot",
+		pools: fakeZpools{
+			"TestPool": fakeZpoolWithPropertyOverride("altroot", "\r"),
+		},
+		want: `parsing "pool info altroot", invalid empty altroot: ""`,
+	},
+}
+
+func TestListPoolsErrors(t *testing.T) {
+	for _, test := range listPoolsErrorTests {
+		tc := test
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			system := newFakeSystem(tc.pools)
+
+			_, gotErr := system.ListPools()
+			if gotErr == nil {
+				t.Errorf(
+					"ListPools()\nTest Case: %q\nFailure: gotErr == nil\nReason: want = %q",
+					tc.name, tc.want)
+				return
+			}
+
+			match, err := regexp.MatchString(tc.want, gotErr.Error())
+			if err != nil {
+				t.Errorf(
+					"ListPools()\nTest Case: %q\nFailure: unexpected exception while matching against gotErr error string\nReason: error = %v",
+					tc.name, err)
+				return
+			}
+
+			if !match {
+				t.Errorf(
+					"ListPools()\nTest Case: %q\nFailure: gotErr did not match the want regex\nReason:\n\tgotErr = %q\n\twant = %q",
+					tc.name, gotErr, tc.want)
 			}
 		})
 	}

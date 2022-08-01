@@ -26,3 +26,19 @@ func poolListsEqual(actual PoolList, expected PoolList) error {
 
 	return nil
 }
+
+func fakeZpoolWithPropertyOverride(prop string, val string) *fakeZpool {
+	result := &fakeZpool{
+		props: propMap{
+			"guid":          "1234567890123459",
+			"size":          "23000000",
+			"allocated":     "19000000",
+			"free":          "4000000",
+			"fragmentation": "4",
+			"health":        "ONLINE",
+			"altroot":       "/some-alt-root",
+		},
+	}
+	result.props[prop] = val
+	return result
+}
