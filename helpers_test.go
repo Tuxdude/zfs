@@ -2,6 +2,7 @@ package zfs
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -53,4 +54,26 @@ func fakeZpoolWithPropertyOverride(override propMap) *fakeZpool {
 		result.props[k] = v
 	}
 	return result
+}
+
+func newPoolForTesting(t *testing.T, poolName string, override propMap) *Pool {
+	system := newFakeSystem(
+		fakeZpools{
+			poolName: fakeZpoolWithPropertyOverride(override),
+		})
+
+	pools, gotErr := system.ListPools()
+	if nil != gotErr {
+		t.Errorf(
+			"Test Case: %q\nFailure: gotErr != nil\nReason: %v",
+			t.Name(), gotErr)
+	}
+
+	if len(pools) != 1 {
+		t.Errorf(
+			"Test Case: %q\nFailure: Expected exactly 1 pool, but got %d\nReason: pools = %v",
+			t.Name(), len(pools), pools)
+	}
+
+	return pools[0]
 }

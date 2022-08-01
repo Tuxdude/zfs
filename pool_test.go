@@ -379,3 +379,17 @@ func TestListPoolsZpoolListErrors(t *testing.T) {
 		})
 	}
 }
+
+func TestPoolString(t *testing.T) {
+	t.Parallel()
+
+	want := `{Pool Name: "MyTestPool"}`
+	pool := newPoolForTesting(t, "MyTestPool", nil)
+	got := pool.String()
+
+	if got != want {
+		t.Errorf(
+			"Pool.String()\nTest Case: %q\nFailure: want and got differ\nReason:\n\tgot  = %q\n\twant = %q",
+			t.Name(), got, want)
+	}
+}
