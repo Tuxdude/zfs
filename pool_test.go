@@ -393,3 +393,37 @@ func TestPoolString(t *testing.T) {
 			t.Name(), got, want)
 	}
 }
+
+func TestPoolVerboseString(t *testing.T) {
+	t.Parallel()
+
+	want := `{` +
+		`Pool Name: "MyTestPool", ` +
+		`GUID: 123456789012345988, ` +
+		`Size: 123, ` +
+		`Allocated: 10, ` +
+		`Free: 113, ` +
+		`Fragmentation: 6%, ` +
+		`HealthStatus: "ONLINE", ` +
+		`AltRoot: "/my-alt-root"` +
+		`}`
+	pool := newPoolForTesting(
+		t,
+		"MyTestPool",
+		propMap{
+			"guid":          "123456789012345988",
+			"size":          "123",
+			"allocated":     "10",
+			"free":          "113",
+			"fragmentation": "6",
+			"health":        "ONLINE",
+			"altroot":       "/my-alt-root",
+		})
+	got := pool.VerboseString()
+
+	if got != want {
+		t.Errorf(
+			"Pool.String()\nTest Case: %q\nFailure: want and got differ\nReason:\n\tgot  = %q\n\twant = %q",
+			t.Name(), got, want)
+	}
+}
