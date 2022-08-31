@@ -380,6 +380,57 @@ func TestListPoolsZpoolListErrors(t *testing.T) {
 	}
 }
 
+var getPropTests = []struct {
+	name          string
+	propOverrides propMap
+	prop          string
+	want          string
+}{
+	{
+		name: "Standard prop",
+		propOverrides: propMap{
+			"guid": "12345678901249876",
+		},
+		prop: "guid",
+		want: "12345678901249876",
+	},
+	{
+		name: "Custom prop",
+		propOverrides: propMap{
+			"foo":     "bar",
+			"somekey": "somevalue",
+			"p1":      "p2",
+		},
+		prop: "somekey",
+		want: "somevalue",
+	},
+}
+
+func TestGetProp(t *testing.T) {
+	for _, test := range getPropTests {
+		tc := test
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			pool := newPoolForTesting(t, "MyTestPool", tc.propOverrides)
+
+			got, gotErr := pool.GetProp(tc.prop)
+			if nil != gotErr {
+				t.Errorf(
+					"GetProp()\nTest Case: %q\nFailure: gotErr != nil\nReason: %v",
+					tc.name, gotErr)
+				return
+			}
+
+			if got != tc.want {
+				t.Errorf(
+					"GetProp()\nTest Case: %q\nFailure: want and got differ\nReason: want=%q got=%q",
+					tc.name, tc.want, got)
+			}
+		})
+	}
+}
+
 func TestPoolString(t *testing.T) {
 	t.Parallel()
 

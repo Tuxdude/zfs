@@ -147,13 +147,34 @@ func (f *fakeZpoolCmd) list(cols []string) (string, error) {
 	return ow.String(), nil
 }
 
-func (f *fakeZpoolCmd) get(pool string, props []string, cols []string) (string, error) {
+func (f *fakeZpoolCmd) get(poolName string, props []string, cols []string) (string, error) {
 	if len(cols) == 0 {
 		return "", fmt.Errorf("at least one column must be specified for 'zpool get'")
 	}
 
-	// TODO: Implement this.
-	panic(fmt.Errorf("Unimplemented"))
+	pool := f.pools[poolName]
+	if pool == nil {
+		return "", fmt.Errorf("pool %q not found", poolName)
+	}
+
+	ow := newColOutputWriter()
+
+	for _, prop := range props {
+		for _, col := range cols {
+			if col == "name" {
+				ow.writeColf(poolName)
+			} else if col == "property" {
+				ow.writeColf(prop)
+			} else if col == "value" {
+				ow.writeColf(pool.props[prop])
+			} else {
+				panic(fmt.Sprintf("'zpool get' unsupported column: %q", col))
+			}
+		}
+		ow.writeNewLine()
+	}
+
+	return ow.String(), nil
 }
 
 func (f *fakeZpoolCmd) setListOverride(override func(cols []string) (string, error)) {
