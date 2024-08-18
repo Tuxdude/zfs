@@ -141,6 +141,7 @@ func (f *fakeZpoolCmd) list(cols []string) (string, error) {
 	ow := newColOutputWriter()
 
 	for _, pool := range pools {
+		// TODO: Validate that all the properties exist in the property map.
 		ow.writePropertyMap(f.pools[pool].props, cols)
 	}
 
