@@ -163,11 +163,11 @@ func (f *fakeZpoolCmd) get(poolName string, props []string, cols []string) (stri
 	for _, prop := range props {
 		for _, col := range cols {
 			if col == "name" {
-				ow.writeColf(poolName)
+				ow.writeCol(poolName)
 			} else if col == "property" {
-				ow.writeColf(prop)
+				ow.writeCol(prop)
 			} else if col == "value" {
-				ow.writeColf(pool.props[prop])
+				ow.writeCol(pool.props[prop])
 			} else {
 				panic(fmt.Sprintf("'zpool get' unsupported column: %q", col))
 			}
@@ -192,6 +192,16 @@ func (o *colOutputWriter) writePropertyMap(props map[string]string, cols []strin
 		o.writeColf("%s", props[col])
 	}
 	o.writeNewLine()
+}
+
+func (o *colOutputWriter) writeCol(msg string) {
+	if o.containsFirstCol {
+		fmt.Fprint(o.result, "\t")
+	} else {
+		o.containsFirstCol = true
+	}
+
+	fmt.Fprint(o.result, msg)
 }
 
 func (o *colOutputWriter) writeColf(format string, args ...interface{}) {
